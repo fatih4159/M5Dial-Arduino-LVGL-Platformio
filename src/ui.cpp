@@ -7,7 +7,8 @@
 #include <M5Dial.h>
 #include <lvgl.h>
 #include "ui.h"
-
+#include "main.h"
+HIDkeyboard keb;
 
 lv_group_t *group;
 lv_obj_t *panel;
@@ -18,6 +19,7 @@ int angleStep = 360 / numButtons;
 
 void main_menu(void)
 {
+    keb.begin();
 
     // make the background black
     lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
@@ -95,8 +97,8 @@ void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
         // transition to the center of the screen when focused
         lv_obj_set_style_translate_x(button, -centerx, LV_STATE_FOCUSED);
         lv_obj_set_style_translate_y(button, -centery, LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_width(button,20,LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_height(button,20,LV_STATE_FOCUSED);
+        lv_obj_set_style_transform_width(button, 20, LV_STATE_FOCUSED);
+        lv_obj_set_style_transform_height(button, 20, LV_STATE_FOCUSED);
 
         lv_obj_t *label = lv_label_create(button);
         lv_label_set_text(label, labels[i].c_str());
@@ -134,14 +136,29 @@ void item_select_cb(lv_event_t *e)
         }
     }
 }
+void showDialog()
+{
+    lv_obj_t *mbox1 = lv_msgbox_create(lv_scr_act());
+    lv_msgbox_add_text(mbox1, "Hello world!");
+    lv_obj_align(mbox1, LV_ALIGN_CENTER, 0, 0);
+}
+
 void button_press_cb(lv_event_t *e)
 {
+    // check if the event is a button press
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+    {
+        // find out which button was pressed
+        lv_obj_t *obj = static_cast<lv_obj_t *>(lv_event_get_target(e));
+        // get the label of the button
+        const char *label = lv_label_get_text(lv_obj_get_child(obj, 0));
+        // prevent spamming the keyboard by checking the last key pressed
 
-    // find out which button was pressed and do something in switch case
-    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
-    lv_obj_t *label = lv_obj_get_child(obj,0);
-    const char *text = lv_label_get_text(label);
-
-    Serial.println(text);
-
+        switch (label[0])
+        {
+        case 'A':
+            keb.sendString("Hello World");
+            break;
+        }
+    }
 }
