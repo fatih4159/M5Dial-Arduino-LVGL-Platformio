@@ -5,5 +5,13 @@
 			"path": ".."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"esp_clk.h": "c",
+			"gpio.h": "c",
+			"gpio_hal.h": "c",
+			"pcnt_types.h": "c",
+			"pcnt_ll.h": "c"
+		}
+	}
 }

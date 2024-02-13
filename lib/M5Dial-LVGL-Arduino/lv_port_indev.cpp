@@ -3,7 +3,9 @@
 
 #include "lv_port_indev.h"
 #include <M5Unified.hpp>
-#include "encoder.hpp"
+//#include "encoder.hpp"
+#include <ESP32Encoder.h>
+
 
 static void touchpad_init(void);
 static void touchpad_read(lv_indev_t *indev, lv_indev_data_t *data);
@@ -15,8 +17,13 @@ static void encoder_read(lv_indev_t *indev, lv_indev_data_t *data);
 
 lv_indev_t *indev_touchpad;
 lv_indev_t *indev_encoder;
+unsigned long encoder2lastToggled;
+bool encoder2Paused = false;
+gpio_num_t pin_a = GPIO_NUM_40;
+ gpio_num_t pin_b = GPIO_NUM_41;
 
-Encoder encoder;
+//Encoder encoder;
+ESP32Encoder encoder;
 
 void lv_port_indev_init(void)
 {
@@ -26,11 +33,11 @@ void lv_port_indev_init(void)
     lv_indev_set_type(indev_touchpad, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev_touchpad, touchpad_read);
 
-    //encoder_init();
+    encoder_init();
 
-    //indev_encoder = lv_indev_create();
-    //lv_indev_set_type(indev_encoder, LV_INDEV_TYPE_ENCODER);
-    //lv_indev_set_read_cb(indev_encoder, encoder_read);
+    indev_encoder = lv_indev_create();
+    lv_indev_set_type(indev_encoder, LV_INDEV_TYPE_ENCODER);
+    lv_indev_set_read_cb(indev_encoder, encoder_read);
 }
 
 static void touchpad_init(void)
@@ -71,11 +78,19 @@ static void touchpad_get_xy(int32_t *x, int32_t *y)
 
 static void encoder_init(void)
 {
-    encoder.setup();
+    	//ESP32Encoder::useInternalWeakPullResistors=UP;
+        encoder.attachSingleEdge(pin_b, pin_a);
+        encoder.setCount(0);
+        encoder.setFilter(1023);
+
+
+
+
 }
 
 static void encoder_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
 {
-    data->enc_diff = encoder.getCount(true);
+    data->enc_diff = encoder.getCount();
     data->state = M5.BtnA.isPressed() ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+    encoder.clearCount();
 }

@@ -12,10 +12,13 @@ HIDkeyboard keb;
 
 lv_group_t *group;
 lv_obj_t *panel;
+lv_obj_t *selectionCircle;
+lv_obj_t *selectionLabel;
 std::vector<std::string> labels = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
 int radius;
 int numButtons = labels.size();
 int angleStep = 360 / numButtons;
+
 
 void main_menu(void)
 {
@@ -40,8 +43,22 @@ void main_menu(void)
     lv_obj_remove_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_remove_flag(panel, LV_OBJ_FLAG_CLICK_FOCUSABLE);
 
-    // create a list of labels
-    // std::vector<lv_img_dsc_t> images = {img_compass,img_compass,img_compass,img_compass,img_compass};
+    // create a circle form the center of the screen
+    selectionCircle = lv_obj_create(panel);
+    lv_obj_set_size(selectionCircle, lv_pct(50), lv_pct(50));
+    lv_obj_set_style_radius(selectionCircle, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(selectionCircle, lv_color_hex(0x00FF00), LV_PART_MAIN);
+    lv_obj_align(selectionCircle, LV_ALIGN_CENTER, 0, 0);
+
+    // create a label for the selected item
+    selectionLabel = lv_label_create(panel);
+    lv_label_set_text(selectionLabel, "Mac Shortcuts");
+    lv_obj_align(selectionLabel, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_color(selectionLabel, lv_color_black(), 0);
+
+    //
+
+    
 
     // create_circular_buttons_with_images(panel, images);
     create_circular_buttons(panel, labels);
@@ -67,6 +84,8 @@ void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
 {
     int centerxy = 85;
     int radius = 89;
+    int movement = 8;
+    int transformSize = 2;
 
     for (int i = 0; i < numButtons; i++)
     {
@@ -75,9 +94,9 @@ void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
         int y = centerxy + radius * sin(angle * M_PI / 180);
 
         // x position of the center from the button
-        int centerx = (x - centerxy) / 1;
+        int centerx = (x - centerxy) / movement;
         // y position of the center from the button
-        int centery = (y - centerxy) / 1;
+        int centery = (y - centerxy) / movement;
 
         int padding = 12;
 
@@ -97,15 +116,19 @@ void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
         // transition to the center of the screen when focused
         lv_obj_set_style_translate_x(button, -centerx, LV_STATE_FOCUSED);
         lv_obj_set_style_translate_y(button, -centery, LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_width(button, 20, LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_height(button, 20, LV_STATE_FOCUSED);
+        lv_obj_set_style_transform_width(button, transformSize, LV_STATE_FOCUSED);
+        lv_obj_set_style_transform_height(button, transformSize, LV_STATE_FOCUSED);
+        
 
         lv_obj_t *label = lv_label_create(button);
+        //set label text color to black
+        lv_obj_set_style_text_color(label, lv_color_black(), 0);
         lv_label_set_text(label, labels[i].c_str());
         lv_group_add_obj(group, button);
         lv_obj_add_event_cb(button, button_press_cb, LV_EVENT_ALL, nullptr);
     }
 }
+
 void item_select_cb(lv_event_t *e)
 {
     lv_indev_t *indev = lv_indev_active();
@@ -119,11 +142,11 @@ void item_select_cb(lv_event_t *e)
     if (code == LV_EVENT_VALUE_CHANGED)
     {
 
-        // focus the next or the previous object according to the rotation
         if (indev_type == LV_INDEV_TYPE_ENCODER)
         {
             group = lv_obj_get_group(buttons);
             int diff = lv_indev_get_key(indev);
+            
 
             if (diff > 0)
             {
@@ -143,20 +166,19 @@ void showDialog()
     lv_obj_align(mbox1, LV_ALIGN_CENTER, 0, 0);
 }
 
-void button_press_cb(lv_event_t *e)
+static void button_press_cb(lv_event_t *e)
 {
     // check if the event is a button press
     if (lv_event_get_code(e) == LV_EVENT_CLICKED)
     {
-        // find out which button was pressed
-        lv_obj_t *obj = static_cast<lv_obj_t *>(lv_event_get_target(e));
         // get the label of the button
+        lv_obj_t *obj = static_cast<lv_obj_t *>(lv_event_get_target(e));
         const char *label = lv_label_get_text(lv_obj_get_child(obj, 0));
-        // prevent spamming the keyboard by checking the last key pressed
 
         switch (label[0])
         {
         case 'A':
+            //showDialog();
             keb.sendString("Hello World");
             break;
         }
