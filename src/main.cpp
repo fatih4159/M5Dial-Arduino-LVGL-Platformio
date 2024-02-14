@@ -6,7 +6,7 @@ void main_task(void *)
 
   m5dial_lvgl_init();
 
-  main_menu();
+  ui_init();
 
   vTaskDelete(nullptr);
 }
