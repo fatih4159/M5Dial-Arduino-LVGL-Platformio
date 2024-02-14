@@ -4,6 +4,7 @@
 #include <vector>
 #include "roller_menu.h"
 #include "../keyborad/hidkeyboard_extension.h"
+#include <M5Dial.h>
 
 
 
