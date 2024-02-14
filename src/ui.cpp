@@ -15,9 +15,7 @@ lv_obj_t *panel;
 lv_obj_t *selectionCircle;
 lv_obj_t *selectionLabel;
 std::vector<std::string> labels = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
-int radius;
-int numButtons = labels.size();
-int angleStep = 360 / numButtons;
+
 
 
 void main_menu(void)
@@ -49,16 +47,8 @@ void main_menu(void)
     lv_obj_set_style_radius(selectionCircle, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(selectionCircle, lv_color_hex(0x00FF00), LV_PART_MAIN);
     lv_obj_align(selectionCircle, LV_ALIGN_CENTER, 0, 0);
-
-    // create a label for the selected item
-    selectionLabel = lv_label_create(panel);
-    lv_label_set_text(selectionLabel, "Mac Shortcuts");
-    lv_obj_align(selectionLabel, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_text_color(selectionLabel, lv_color_black(), 0);
-
-    //
-
-    
+    selectionLabel = lv_label_create(selectionCircle);
+    lv_label_set_text(selectionLabel, "A");
 
     // create_circular_buttons_with_images(panel, images);
     create_circular_buttons(panel, labels);
@@ -82,6 +72,8 @@ void main_menu(void)
 }
 void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
 {
+    int numButtons = labels.size();
+    int angleStep = 360 / numButtons;
     int centerxy = 85;
     int radius = 89;
     int movement = 8;
@@ -139,6 +131,9 @@ void item_select_cb(lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *buttons = (lv_obj_t *)lv_event_get_target(e);
 
+    // get the selected button label and set it to the selection label
+
+
     if (code == LV_EVENT_VALUE_CHANGED)
     {
 
@@ -168,6 +163,12 @@ void showDialog()
 
 static void button_press_cb(lv_event_t *e)
 {
+    if (lv_event_get_code(e) == LV_EVENT_FOCUSED)
+    {
+        lv_obj_t *obj = static_cast<lv_obj_t *>(lv_event_get_target(e));
+        const char *label = lv_label_get_text(lv_obj_get_child(obj, 0));
+        lv_label_set_text(selectionLabel, label);
+    }
     // check if the event is a button press
     if (lv_event_get_code(e) == LV_EVENT_CLICKED)
     {
