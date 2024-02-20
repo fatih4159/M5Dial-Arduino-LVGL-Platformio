@@ -51,15 +51,16 @@ bool HIDkeyboard::sendChar(uint8_t _keycode)
 
 bool HIDkeyboard::sendPress(uint8_t _keycode, uint8_t modifier)
 {
-  uint8_t keycode[6] = {0};
-  keycode[0] = _keycode;
+  uint8_t keycode[6] = {_keycode};
+  
 
   return tud_hid_keyboard_report(report_id, modifier, keycode);
 }
 
-bool HIDkeyboard::sendMultipleKey(uint8_t _keycode[], uint8_t len, uint8_t modifier)
+bool HIDkeyboard::sendMultipleKey(uint8_t _keycode[], uint8_t modifier)
 {
   // for each key in the keycode array send a press and release after all keys are pressed
+  uint8_t len = sizeof(_keycode);
   for(uint8_t i = 0; i < len; i++) {
     if(!sendPress(_keycode[i], modifier)) return false;
     delay(2);

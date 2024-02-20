@@ -13,7 +13,7 @@ public:
     bool begin(char* str = nullptr);
 
     bool sendKey(uint8_t _keycode, uint8_t modifier = 0);
-    bool sendMultipleKey(uint8_t _keycode[], uint8_t len, uint8_t modifier = 0);
+    bool sendMultipleKey(uint8_t _keycode[], uint8_t modifier = 0);
     bool sendChar(uint8_t _keycode);
     bool sendPress(uint8_t _keycode, uint8_t modifier = 0);
     bool sendRelease();

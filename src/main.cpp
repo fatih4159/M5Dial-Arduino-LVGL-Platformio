@@ -5,6 +5,8 @@ void main_task(void *)
 {
 
   m5dial_lvgl_init();
+  M5Dial.Display.setBrightness(50);
+  M5Dial.Display.setRotation(3);
 
   ui_init();
 
@@ -15,7 +17,7 @@ void main_task(void *)
 void setup()
 {
   Serial.begin(9600);
-  xTaskCreatePinnedToCore(main_task, "main_task", 8192, nullptr, 1, nullptr, 1);
+  xTaskCreatePinnedToCore(main_task, "main_task", 1200*40, nullptr, 1, nullptr, 1);
 }
  bool isConnectedChanged = false;
 void loop()

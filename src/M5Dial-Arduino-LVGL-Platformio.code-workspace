@@ -1,8 +1,7 @@
 {
 	"folders": [
 		{
-			"name": "M5Dial-Arduino-LVGL-Platformio",
-			"path": ".."
+			"path": "../../../../../Desktop/M5Dial-Arduino-LVGL_SLS-Platformio"
 		}
 	],
 	"settings": {
@@ -11,7 +10,8 @@
 			"gpio.h": "c",
 			"gpio_hal.h": "c",
 			"pcnt_types.h": "c",
-			"pcnt_ll.h": "c"
+			"pcnt_ll.h": "c",
+			"ui.h": "c"
 		}
 	}
 }
