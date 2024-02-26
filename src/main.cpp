@@ -6,7 +6,7 @@ void main_task(void *)
 
   m5dial_lvgl_init();
   M5Dial.Display.setBrightness(50);
-  M5Dial.Display.setRotation(3);
+  M5Dial.Display.setRotation(2);
 
   ui_init();
 

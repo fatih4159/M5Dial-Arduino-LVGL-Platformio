@@ -1,5 +1,6 @@
 #include "main_menu.h"
 #include "../helper/KebCom.h"
+#include "app_type.hpp"
 
 LV_IMAGE_DECLARE(chrome);
 LV_IMAGE_DECLARE(img_apple);
@@ -14,14 +15,18 @@ lv_group_t *main_group;
 lv_obj_t *icon;
 
 std::vector<std::string> app_index = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
+std::vector<app_container_t> apps;
 
 std::map<std::string, lv_img_dsc_t> app_imageMap;
 
 std::map<std::string, std::string> app_description;
-HIDkeyboard keb_main;
+//HIDkeyboard keb_main;
+
+bool downloadMode = false;
 
 void main_menu()
 {
+    KebCom::init();
     app_imageMap["A"] = img_apple;
     app_imageMap["B"] = img_windows;
     app_imageMap["C"] = img_windows;
@@ -32,7 +37,6 @@ void main_menu()
     app_description["C"] = "Teams Macros";
     app_description["L"] = "Download Mode";
 
-    keb_main.begin();
 
     //  make the background black
     lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
@@ -200,8 +204,6 @@ void showButtonCarousel(std::vector<std::string> options, lv_group_t *main_group
 
     roller_panel = lv_obj_create(lv_screen_active());
 
-    
-
     lv_obj_set_size(roller_panel, lv_obj_get_width(lv_screen_active()), lv_obj_get_height(lv_screen_active()));
     lv_obj_align(roller_panel, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_border_color(roller_panel, lv_color_black(), 0);
@@ -214,10 +216,9 @@ void showButtonCarousel(std::vector<std::string> options, lv_group_t *main_group
     lv_obj_set_flex_flow(roller_panel, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(roller_panel, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-    // add a back button to the list 
+    // add a back button to the list
     options.insert(options.begin(), "back");
 
- 
     for (const std::string &option : options)
     {
         lv_obj_t *button = lv_btn_create(roller_panel);
@@ -229,13 +230,11 @@ void showButtonCarousel(std::vector<std::string> options, lv_group_t *main_group
         lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
 
-
         lv_group_add_obj(main_group, button);
         lv_obj_add_event_cb(button, button_carousel_cb, LV_EVENT_ALL, nullptr);
     }
-    //focus on the second button
+    // focus on the second button
     lv_group_focus_obj(lv_obj_get_child(roller_panel, 0));
-
 }
 static void button_carousel_cb(lv_event_t *e)
 {
@@ -253,50 +252,48 @@ static void button_carousel_cb(lv_event_t *e)
         }
         if (strcmp(label, "Toggle Mic") == 0)
         {
-            keb_main.sendPress(HID_KEY_CONTROL_LEFT);
-            keb_main.sendPress(HID_KEY_SHIFT_LEFT);
+            KebCom::getKeb().sendPress(HID_KEY_CONTROL_LEFT);
+            KebCom::getKeb().sendPress(HID_KEY_SHIFT_LEFT);
             delay(800);
-            keb_main.sendPress(HID_KEY_M);
+            KebCom::getKeb().sendPress(HID_KEY_M);
             delay(100);
-            keb_main.sendRelease();
+            KebCom::getKeb().sendRelease();
         }
         if (strcmp(label, "Toggle Cam") == 0)
         {
-            keb_main.sendPress(HID_KEY_CONTROL_LEFT);
-            keb_main.sendPress(HID_KEY_SHIFT_LEFT);
+            KebCom::getKeb().sendPress(HID_KEY_CONTROL_LEFT);
+            KebCom::getKeb().sendPress(HID_KEY_SHIFT_LEFT);
             delay(800);
-            keb_main.sendPress(HID_KEY_O);
+            KebCom::getKeb().sendPress(HID_KEY_O);
             delay(100);
-            keb_main.sendRelease();
+            KebCom::getKeb().sendRelease();
         }
         if (strcmp(label, "Toggle Hand") == 0)
         {
-            // keb_main.sendPress(HID_KEY_CONTROL_LEFT);
+            // KebCom::getKeb()->sendPress(HID_KEY_CONTROL_LEFT);
             // delay(100);
-            // keb_main.sendPress(HID_KEY_SHIFT_LEFT);
+            // KebCom::getKeb()->sendPress(HID_KEY_SHIFT_LEFT);
             // delay(500);
-            // keb_main.sendPress(HID_KEY_K);
+            // KebCom::getKeb()->sendPress(HID_KEY_K);
             // delay(100);
             // keb_main.sendRelease();
         }
         if (strcmp(label, "Launch Intellij MAC") == 0)
         {
-            KebCom::mac_launch("intellij", keb_main);
+            KebCom::mac_launch("intellij");
         }
         if (strcmp(label, "Launch Teams MAC") == 0)
         {
-            KebCom::mac_launch("teams", keb_main);
+            KebCom::mac_launch("teams");
         }
         if (strcmp(label, "Launch Teams WIN") == 0)
         {
-            KebCom::win_launch("teams", keb_main);
+            KebCom::win_launch("teams");
         }
         if (strcmp(label, "Launch Intellij WIN") == 0)
         {
-            KebCom::win_launch("intellij", keb_main);
+            KebCom::win_launch("intellij");
         }
-
-        
     }
 }
 
@@ -336,25 +333,34 @@ static void button_press_cb(lv_event_t *e)
         if (label[0] == 'A')
         {
             std::vector<std::string> options = {"Launch Intellij MAC", "Launch Teams MAC"};
-            showButtonCarousel(options, main_group);   
+            showButtonCarousel(options, main_group);
         }
         if (label[0] == 'B')
         {
             std::vector<std::string> options = {"Launch Teams WIN", "Launch Intellij WIN"};
-            showButtonCarousel(options, main_group);        
+            showButtonCarousel(options, main_group);
         }
         if (label[0] == 'C')
         {
             std::vector<std::string> options = {"Toggle Mic", "Toggle Cam", "Toggle Hand", "Launch Teams"};
-            showButtonCarousel(options, main_group);  
+            showButtonCarousel(options, main_group);
         }
         if (label[0] == 'L')
         {
             // lv_obj_clean(panel);
-            //M5Dial.Display.sleep();
+            M5Dial.Display.sleep();
             REG_WRITE(RTC_CNTL_OPTION1_REG, RTC_CNTL_FORCE_DOWNLOAD_BOOT);
-            esp_restart();
-            
+            // M5Dial.Power.deepSleep(0,true);
+            delay(1000);
+            // keb_main.persistentReset(RESTART_BOOTLOADER_DFU);
+            try
+            {
+                esp_restart();
+            }
+            catch (const std::exception &e)
+            {
+                // just eat it 
+            }
         }
     }
 }
