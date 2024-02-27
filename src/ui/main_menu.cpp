@@ -20,13 +20,39 @@ std::vector<app_container_t> apps;
 std::map<std::string, lv_img_dsc_t> app_imageMap;
 
 std::map<std::string, std::string> app_description;
-//HIDkeyboard keb_main;
+// HIDkeyboard keb_main;
 
 bool downloadMode = false;
+
+void insert_functions()
+{
+
+    apps.push_back(app_container_t(0, "Apple Macros", img_apple, [](lv_event_t *e)
+    {
+        showButtonCarousel({"Launch Intellij MAC", "Launch Teams MAC"}, main_group);
+    }));
+
+    apps.push_back(app_container_t(0, "Windows Macros", img_apple, [](lv_event_t *e)
+    {
+        showButtonCarousel({"Launch Intellij WIN", "Launch Teams WIN"}, main_group);
+    }));
+
+    apps.push_back(app_container_t(0, "Teams Windows Macros", img_apple, [](lv_event_t *e)
+    {
+        showButtonCarousel({"Launch Teams", "Toggle Mic", "Toggle Cam", "Toggle Hand"}, main_group);
+    }));
+
+    apps.push_back(app_container_t(0, "Teams Mac Macros", img_apple, [](lv_event_t *e)
+    {
+        showButtonCarousel({"Launch Teams", "Toggle Mic", "Toggle Cam", "Toggle Hand"}, main_group);
+    }));
+
+}
 
 void main_menu()
 {
     KebCom::init();
+
     app_imageMap["A"] = img_apple;
     app_imageMap["B"] = img_windows;
     app_imageMap["C"] = img_windows;
@@ -36,7 +62,6 @@ void main_menu()
     app_description["B"] = "Windows Macros";
     app_description["C"] = "Teams Macros";
     app_description["L"] = "Download Mode";
-
 
     //  make the background black
     lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
@@ -359,7 +384,7 @@ static void button_press_cb(lv_event_t *e)
             }
             catch (const std::exception &e)
             {
-                // just eat it 
+                // just eat it
             }
         }
     }
