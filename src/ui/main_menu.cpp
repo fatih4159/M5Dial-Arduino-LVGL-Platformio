@@ -1,5 +1,4 @@
 #include "main_menu.h"
-#include "../helper/KebCom.h"
 #include "app_type.hpp"
 
 LV_IMAGE_DECLARE(chrome);
@@ -51,7 +50,7 @@ void insert_functions()
 
 void main_menu()
 {
-    KebCom::init();
+    //KebCom::init();
 
     app_imageMap["A"] = img_apple;
     app_imageMap["B"] = img_windows;
@@ -238,7 +237,7 @@ void showButtonCarousel(std::vector<std::string> options, lv_group_t *main_group
 
     lv_obj_set_scroll_snap_y(roller_panel, LV_SCROLL_SNAP_CENTER);
 
-    lv_obj_set_flex_flow(roller_panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_flow(roller_panel, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(roller_panel, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
     // add a back button to the list
@@ -277,47 +276,31 @@ static void button_carousel_cb(lv_event_t *e)
         }
         if (strcmp(label, "Toggle Mic") == 0)
         {
-            KebCom::getKeb().sendPress(HID_KEY_CONTROL_LEFT);
-            KebCom::getKeb().sendPress(HID_KEY_SHIFT_LEFT);
-            delay(800);
-            KebCom::getKeb().sendPress(HID_KEY_M);
-            delay(100);
-            KebCom::getKeb().sendRelease();
+            Serial.println(label);
         }
         if (strcmp(label, "Toggle Cam") == 0)
         {
-            KebCom::getKeb().sendPress(HID_KEY_CONTROL_LEFT);
-            KebCom::getKeb().sendPress(HID_KEY_SHIFT_LEFT);
-            delay(800);
-            KebCom::getKeb().sendPress(HID_KEY_O);
-            delay(100);
-            KebCom::getKeb().sendRelease();
+            Serial.println(label);
         }
         if (strcmp(label, "Toggle Hand") == 0)
         {
-            // KebCom::getKeb()->sendPress(HID_KEY_CONTROL_LEFT);
-            // delay(100);
-            // KebCom::getKeb()->sendPress(HID_KEY_SHIFT_LEFT);
-            // delay(500);
-            // KebCom::getKeb()->sendPress(HID_KEY_K);
-            // delay(100);
-            // keb_main.sendRelease();
+            Serial.println(label);
         }
         if (strcmp(label, "Launch Intellij MAC") == 0)
         {
-            KebCom::mac_launch("intellij");
+            Serial.println(label);
         }
         if (strcmp(label, "Launch Teams MAC") == 0)
         {
-            KebCom::mac_launch("teams");
+            Serial.println(label);
         }
         if (strcmp(label, "Launch Teams WIN") == 0)
         {
-            KebCom::win_launch("teams");
+            Serial.println(label);
         }
         if (strcmp(label, "Launch Intellij WIN") == 0)
         {
-            KebCom::win_launch("intellij");
+            Serial.println(label);
         }
     }
 }
