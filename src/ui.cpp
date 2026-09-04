@@ -151,7 +151,6 @@ void ui_init(ShellyManager *shellyManager, WebUiService *webUi, MqttService *mqt
     lv_obj_set_style_text_color(gFooter, lv_color_hex(0x7E8998), 0);
 
     gGroup = lv_group_create();
-    lv_group_set_default(gGroup);
     attach_encoder_to_group();
     rebuild_rows();
 }
