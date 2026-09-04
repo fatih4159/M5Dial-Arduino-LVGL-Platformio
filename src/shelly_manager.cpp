@@ -108,8 +108,11 @@ size_t ShellyManager::discoverMdns() {
 
 void ShellyManager::loop() {
     if (WiFi.status() != WL_CONNECTED || devices_.empty() || !configStore_) return;
-    const uint32_t interval = max<uint32_t>(1000, configStore_->get().refreshIntervalMs);
-    const uint32_t perDevice = max<uint32_t>(350, interval / max<size_t>(1, devices_.size()));
+
+    uint32_t interval = configStore_->get().refreshIntervalMs;
+    if (interval < 1000) interval = 1000;
+    uint32_t perDevice = interval / devices_.size();
+    if (perDevice < 350) perDevice = 350;
     if (millis() - lastRefreshMs_ < perDevice) return;
 
     lastRefreshMs_ = millis();
@@ -171,7 +174,8 @@ bool ShellyManager::refreshGen2(ShellyDevice &device) {
     if (deserializeJson(doc, payload)) return false;
     if (!doc["output"].is<bool>()) return false;
     device.on = doc["output"].as<bool>();
-    device.powerW = doc["apower"].is<float>() || doc["apower"].is<int>() ? doc["apower"].as<float>() : NAN;
+    if (doc["apower"].is<float>() || doc["apower"].is<int>()) device.powerW = doc["apower"].as<float>();
+    else device.powerW = NAN;
     return true;
 }
 
