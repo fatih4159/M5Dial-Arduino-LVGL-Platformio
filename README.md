@@ -1,45 +1,47 @@
 # M5 Dial Shelly Control
 
-Lokale Smart-Home-Firmware für den **M5Stack M5 Dial** auf Basis von **LVGL 9**, mit direkter Shelly-Steuerung, integrierter WebUI und lokalem MQTT-Broker.
+Lokale Smart-Home-Firmware für den **M5Stack M5 Dial** auf Basis von **LVGL 9** mit direkter Shelly-Steuerung, integrierter WebUI und lokalem MQTT-Broker.
 
 ## Funktionen
 
-- M5-Dial-LVGL-Oberfläche für mehrere Shelly-Geräte
+- LVGL-Oberfläche für mehrere Shelly-Geräte
 - Drehencoder: Gerät auswählen
-- Encoder drücken / Touch: ausgewähltes Gerät umschalten
+- Encoder drücken oder Touch: ausgewähltes Gerät umschalten
 - Shelly Gen2/Gen3 Discovery via mDNS (`_shelly._tcp`)
 - Shelly Gen1 Discovery via `_http._tcp`, sofern der Host als Shelly erkennbar ist
 - Gen1-Steuerung über `/relay/{channel}`
 - Gen2/Gen3-Steuerung über Shelly RPC (`Switch.GetStatus`, `Switch.Set`)
-- Leistungsanzeige für Gen2/Gen3 Geräte, wenn `apower` verfügbar ist
-- Persistente Konfiguration in ESP32 Preferences/NVS
-- Responsive lokale WebUI
+- Leistungsanzeige, wenn der Shelly `apower` bereitstellt
+- persistente Konfiguration in ESP32 Preferences/NVS
+- responsive lokale WebUI ohne Cloud-Abhängigkeit
 - WLAN-Scan und WLAN-Konfiguration
 - Shelly-Geräte automatisch suchen oder manuell per IP/Hostname hinzufügen
 - Geräte umbenennen und entfernen
 - MQTT-Broker auf dem M5 Dial via PicoMQTT
-- Captive Setup-Access-Point bei fehlender/fehlerhafter WLAN-Konfiguration
+- optionale MQTT-Benutzername/Passwort-Authentifizierung
+- Captive Setup-Access-Point bei fehlender oder fehlerhafter WLAN-Konfiguration
+- Setup-AP-Passwort über die WebUI änderbar
 
 ## Erstinstallation / Setup
 
 Wenn noch kein funktionierendes WLAN gespeichert ist, startet der M5 Dial automatisch:
 
 - **SSID:** `M5Dial-Setup-XXXXXX`
-- **Passwort:** `m5dial-setup`
+- **Standardpasswort:** `m5dial-setup`
 - **WebUI:** `http://192.168.4.1`
 
-Die Zugangsdaten werden auch auf dem M5 Dial angezeigt.
+SSID und Setup-Adresse werden auf dem M5 Dial angezeigt. Das AP-Passwort wird nach einer Änderung aus Sicherheitsgründen nicht dauerhaft im Display eingeblendet.
 
 Nach erfolgreicher WLAN-Konfiguration ist die WebUI normalerweise erreichbar unter:
 
 - `http://m5dial-shelly.local`
-- alternativ über die im Display bzw. Router angezeigte IP-Adresse
+- alternativ über die im Router angezeigte IP-Adresse
 
-Hostname, MQTT-Port und Polling-Intervall können über die WebUI geändert werden.
+Über die WebUI können WLAN, Hostname, Polling-Intervall, Setup-AP-Passwort, MQTT-Broker und Shelly-Geräte verwaltet werden.
 
 ## MQTT
 
-Standardmäßig läuft der Broker auf Port **1883**. Er ist für kleine lokale Installationen gedacht.
+Standardmäßig läuft der Broker auf Port **1883**. Bleibt der MQTT-Benutzername leer, akzeptiert der Broker Clients ohne Anmeldung. Sobald ein Benutzername gesetzt ist, sind Benutzername und Passwort erforderlich.
 
 ### Status-Topics
 
@@ -70,15 +72,21 @@ off
 toggle
 ```
 
-Beispiel:
+Ohne Authentifizierung:
 
 ```bash
 mosquitto_pub -h <M5-DIAL-IP> -p 1883 -t m5dial/shelly/0/set -m toggle
 ```
 
+Mit Authentifizierung:
+
+```bash
+mosquitto_pub -h <M5-DIAL-IP> -p 1883 -u <USER> -P <PASSWORT> -t m5dial/shelly/0/set -m toggle
+```
+
 ### PicoMQTT-Einschränkungen
 
-Der integrierte PicoMQTT-Broker implementiert MQTT 3.1.1. Der Broker unterstützt QoS 0 und ignoriert retained Messages sowie Last-Will-Nachrichten. Für umfangreiche MQTT-Installationen sollte weiterhin ein dedizierter Broker wie Mosquitto verwendet werden; der M5 Dial kann dann primär als lokales Bediengerät dienen.
+Der integrierte PicoMQTT-Broker implementiert MQTT 3.1.1. Der Broker unterstützt QoS 0 und ignoriert retained Messages sowie Last-Will-Nachrichten. Für große oder kritische MQTT-Installationen ist ein dedizierter Broker wie Mosquitto sinnvoller.
 
 ## Mehrkanal-Shellys
 
@@ -104,6 +112,8 @@ Serieller Monitor:
 pio device monitor
 ```
 
+Die PlatformIO-Plattform und LVGL-Version sind im Projekt gepinnt, um reproduzierbare Builds zu erhalten.
+
 ## Sicherheit
 
-Die Firmware ist für ein vertrauenswürdiges lokales LAN vorgesehen. Die Konfigurations-WebUI und der PicoMQTT-Broker stellen derzeit keine Benutzeranmeldung bereit. Den Broker nicht direkt aus dem Internet erreichbar machen und den M5 Dial in einem geeigneten IoT-/LAN-Segment betreiben.
+Die Firmware ist für ein vertrauenswürdiges lokales LAN bzw. IoT-VLAN gedacht. MQTT kann mit Benutzername und Passwort abgesichert werden. Die Konfigurations-WebUI besitzt aktuell keine eigene Anmeldung und sollte deshalb nicht aus dem Internet erreichbar sein.
