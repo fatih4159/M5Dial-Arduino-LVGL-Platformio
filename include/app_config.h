@@ -16,8 +16,12 @@ struct AppConfig {
     String hostname = "m5dial-shelly";
     String wifiSsid;
     String wifiPassword;
+
     bool mqttEnabled = true;
     uint16_t mqttPort = 1883;
+    String mqttUsername;
+    String mqttPassword;
+
     uint32_t refreshIntervalMs = 3000;
     String setupApPassword = "m5dial-setup";
     std::vector<SavedShellyDevice> savedDevices;
