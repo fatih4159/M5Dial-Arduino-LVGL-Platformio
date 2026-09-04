@@ -1,8 +1,10 @@
-//
-// Created by Fatih  Tuluk on 12.02.24.
-//
+#pragma once
 
-void main_menu(void);
-void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels);
-void item_select_cb(lv_event_t *e);
-void button_press_cb(lv_event_t *e);
+#include <lvgl.h>
+#include "mqtt_service.h"
+#include "shelly_manager.h"
+#include "web_ui.h"
+
+void ui_init(ShellyManager *shellyManager, WebUiService *webUi, MqttService *mqttService);
+void ui_loop();
+bool ui_take_toggle_request(size_t &deviceIndex);
