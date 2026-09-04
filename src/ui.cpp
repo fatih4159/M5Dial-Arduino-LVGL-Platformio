@@ -22,9 +22,9 @@ size_t gToggleIndex = 0;
 uint32_t gLastUiUpdate = 0;
 
 void row_event_cb(lv_event_t *event) {
-    lv_event_code_t code = lv_event_get_code(event);
+    const lv_event_code_t code = lv_event_get_code(event);
     lv_obj_t *row = static_cast<lv_obj_t *>(lv_event_get_target(event));
-    size_t index = reinterpret_cast<uintptr_t>(lv_event_get_user_data(event));
+    const size_t index = reinterpret_cast<uintptr_t>(lv_event_get_user_data(event));
 
     if (code == LV_EVENT_CLICKED) {
         gToggleIndex = index;
@@ -81,7 +81,7 @@ void rebuild_rows() {
         lv_obj_set_style_text_color(name, lv_color_hex(0xF4F7FB), 0);
 
         lv_obj_t *meta = lv_label_create(row);
-        String info = device->host + " C" + String(device->channel);
+        const String info = device->host + " C" + String(device->channel);
         lv_label_set_text(meta, info.c_str());
         lv_obj_set_width(meta, 120);
         lv_label_set_long_mode(meta, LV_LABEL_LONG_DOT);
@@ -169,7 +169,7 @@ void ui_loop() {
     lv_label_set_text(gHeader, header.c_str());
 
     String footer;
-    if (gWebUi->isApMode()) footer = gWebUi->apSsid() + " | PW: m5dial-setup | 192.168.4.1";
+    if (gWebUi->isApMode()) footer = gWebUi->apSsid() + " | 192.168.4.1";
     else footer = gWebUi->accessAddress();
     lv_label_set_text(gFooter, footer.c_str());
 }
