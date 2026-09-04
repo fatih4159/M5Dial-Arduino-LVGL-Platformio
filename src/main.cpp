@@ -35,7 +35,6 @@ void setup() {
     Serial.println("Web UI: " + webUi.accessAddress());
     if (webUi.isApMode()) {
         Serial.println("Setup AP: " + webUi.apSsid());
-        Serial.println("Setup password: m5dial-setup");
     }
 }
 
