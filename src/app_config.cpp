@@ -8,8 +8,11 @@ bool ConfigStore::begin() {
     config_.wifiPassword = preferences_.getString("wifi_pass", "");
     config_.mqttEnabled = preferences_.getBool("mqtt_en", true);
     config_.mqttPort = preferences_.getUShort("mqtt_port", 1883);
+    config_.mqttUsername = preferences_.getString("mqtt_user", "");
+    config_.mqttPassword = preferences_.getString("mqtt_pass", "");
     config_.refreshIntervalMs = preferences_.getULong("refresh_ms", 3000);
     config_.setupApPassword = preferences_.getString("ap_pass", "m5dial-setup");
+    if (config_.setupApPassword.length() < 8) config_.setupApPassword = "m5dial-setup";
     loadDevices(preferences_.getString("devices", "[]"));
     return true;
 }
@@ -21,6 +24,8 @@ bool ConfigStore::save() {
     preferences_.putString("wifi_pass", config_.wifiPassword);
     preferences_.putBool("mqtt_en", config_.mqttEnabled);
     preferences_.putUShort("mqtt_port", config_.mqttPort);
+    preferences_.putString("mqtt_user", config_.mqttUsername);
+    preferences_.putString("mqtt_pass", config_.mqttPassword);
     preferences_.putULong("refresh_ms", config_.refreshIntervalMs);
     preferences_.putString("ap_pass", config_.setupApPassword);
     preferences_.putString("devices", serializeDevices());
