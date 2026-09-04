@@ -14,6 +14,7 @@ public:
 
     bool isApMode() const { return apMode_; }
     String apSsid() const { return apSsid_; }
+    String apPassword() const;
     String accessAddress() const;
 
 private:
