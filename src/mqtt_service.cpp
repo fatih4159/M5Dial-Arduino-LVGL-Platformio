@@ -21,10 +21,12 @@ void MqttService::begin(ConfigStore *configStore, ShellyManager *shellyManager) 
 
 void MqttService::handleCommand(const char *topic, const char *payload) {
     // m5dial/shelly/<index>/set
+    static const int prefixLength = 14;
     String t(topic);
-    int p1 = t.indexOf('/', 15);
+    int p1 = t.indexOf('/', prefixLength);
     if (p1 < 0) return;
-    String indexPart = t.substring(15, p1);
+    String indexPart = t.substring(prefixLength, p1);
+    if (indexPart.isEmpty()) return;
     int index = indexPart.toInt();
     if (index < 0 || static_cast<size_t>(index) >= shellyManager_->count()) return;
 
@@ -55,7 +57,8 @@ void MqttService::processPendingCommand() {
 
 void MqttService::publishStatuses() {
     if (!broker_) return;
-    const uint32_t interval = configStore_ ? max(static_cast<uint32_t>(2000), configStore_->get().refreshIntervalMs) : 3000;
+    uint32_t interval = configStore_ ? configStore_->get().refreshIntervalMs : 3000;
+    if (interval < 2000) interval = 2000;
     if (millis() - lastPublishMs_ < interval) return;
     lastPublishMs_ = millis();
 
