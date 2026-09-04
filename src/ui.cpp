@@ -63,7 +63,7 @@ void rebuild_rows() {
     for (size_t i = 0; i < gShelly->count(); ++i) {
         const ShellyDevice *device = gShelly->get(i);
         lv_obj_t *row = lv_button_create(gList);
-        lv_obj_set_size(row, 190, 54);
+        lv_obj_set_size(row, 190, 58);
         lv_obj_set_style_radius(row, 14, 0);
         lv_obj_set_style_bg_color(row, lv_color_hex(0x151920), 0);
         lv_obj_set_style_bg_color(row, lv_color_hex(0x1D2A20), LV_STATE_FOCUSED);
@@ -72,24 +72,21 @@ void rebuild_rows() {
         lv_obj_set_style_border_color(row, lv_color_hex(0x56D364), LV_STATE_FOCUSED);
         lv_obj_set_style_pad_left(row, 12, 0);
         lv_obj_set_style_pad_right(row, 12, 0);
-        lv_obj_set_style_pad_top(row, 7, 0);
-        lv_obj_set_style_pad_bottom(row, 7, 0);
 
         lv_obj_t *name = lv_label_create(row);
         lv_label_set_text(name, device->name.c_str());
-        lv_obj_set_width(name, 122);
+        lv_obj_set_width(name, 120);
         lv_label_set_long_mode(name, LV_LABEL_LONG_DOT);
-        lv_obj_align(name, LV_ALIGN_LEFT_MID, 0, -8);
+        lv_obj_align(name, LV_ALIGN_LEFT_MID, 0, -10);
         lv_obj_set_style_text_color(name, lv_color_hex(0xF4F7FB), 0);
 
         lv_obj_t *meta = lv_label_create(row);
-        String info = device->host + "  C" + String(device->channel);
+        String info = device->host + " C" + String(device->channel);
         lv_label_set_text(meta, info.c_str());
-        lv_obj_set_width(meta, 125);
+        lv_obj_set_width(meta, 120);
         lv_label_set_long_mode(meta, LV_LABEL_LONG_DOT);
-        lv_obj_align(meta, LV_ALIGN_LEFT_MID, 0, 10);
+        lv_obj_align(meta, LV_ALIGN_LEFT_MID, 0, 11);
         lv_obj_set_style_text_color(meta, lv_color_hex(0x7E8998), 0);
-        lv_obj_set_style_text_font(meta, &lv_font_montserrat_10, 0);
 
         lv_obj_t *state = lv_label_create(row);
         lv_label_set_text(state, device->online ? (device->on ? "EIN" : "AUS") : "---");
@@ -152,7 +149,6 @@ void ui_init(ShellyManager *shellyManager, WebUiService *webUi, MqttService *mqt
     lv_label_set_long_mode(gFooter, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(gFooter, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_color(gFooter, lv_color_hex(0x7E8998), 0);
-    lv_obj_set_style_text_font(gFooter, &lv_font_montserrat_10, 0);
 
     gGroup = lv_group_create();
     lv_group_set_default(gGroup);
