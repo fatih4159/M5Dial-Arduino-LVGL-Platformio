@@ -11,7 +11,9 @@
 #define PCNT_HIGH_LIMIT 32767
 
 Encoder::Encoder() {
-  _pcnt_unit = PCNT_UNIT_MAX;
+  // PCNT_UNIT_MAX is a sentinel/count value, not a usable hardware unit.
+  // M5 Dial has one rotary encoder, so a fixed unit is sufficient here.
+  _pcnt_unit = PCNT_UNIT_0;
 }
 
 Encoder::~Encoder() {
@@ -33,6 +35,10 @@ void Encoder::setup(gpio_num_t pin_a, gpio_num_t pin_b) {
     .channel = PCNT_CHANNEL_0,
   };
   pcnt_unit_config(&pcnt_config);
+
+  // Ignore very short transitions caused by mechanical encoder bounce.
+  pcnt_set_filter_value(_pcnt_unit, 100);
+  pcnt_filter_enable(_pcnt_unit);
 
   pcnt_counter_pause(_pcnt_unit);
   pcnt_counter_clear(_pcnt_unit);
