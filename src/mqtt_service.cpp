@@ -1,8 +1,8 @@
 #include "mqtt_service.h"
+#include <WiFi.h>
 
 MqttService::~MqttService() {
     delete broker_;
-    delete tcpServer_;
 }
 
 void MqttService::begin(ConfigStore *configStore, ShellyManager *shellyManager) {
@@ -10,9 +10,8 @@ void MqttService::begin(ConfigStore *configStore, ShellyManager *shellyManager) 
     shellyManager_ = shellyManager;
     if (!configStore_ || !shellyManager_ || !configStore_->get().mqttEnabled) return;
 
-    tcpServer_ = new WiFiServer(configStore_->get().mqttPort);
-    broker_ = new PicoMQTT::Server(*tcpServer_);
-
+    const AppConfig &cfg = configStore_->get();
+    broker_ = new ConfiguredMqttBroker(cfg.mqttPort, cfg.mqttUsername, cfg.mqttPassword);
     broker_->subscribe("m5dial/shelly/+/set", [this](const char *topic, const char *payload) {
         handleCommand(topic, payload);
     });
