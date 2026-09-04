@@ -1,147 +1,187 @@
-//
-// Created by Fatih  Tuluk on 12.02.24.
-//
-
-#include <Arduino.h>
-#include "M5Dial-LVGL.h"
-#include <M5Dial.h>
-#include <lvgl.h>
 #include "ui.h"
 
+#include <Arduino.h>
+#include <WiFi.h>
+#include <vector>
 
-lv_group_t *group;
-lv_obj_t *panel;
-std::vector<std::string> labels = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
-int radius;
-int numButtons = labels.size();
-int angleStep = 360 / numButtons;
+namespace {
+ShellyManager *gShelly = nullptr;
+WebUiService *gWebUi = nullptr;
+MqttService *gMqtt = nullptr;
 
-void main_menu(void)
-{
+lv_group_t *gGroup = nullptr;
+lv_obj_t *gHeader = nullptr;
+lv_obj_t *gList = nullptr;
+lv_obj_t *gFooter = nullptr;
+std::vector<lv_obj_t *> gRows;
+std::vector<lv_obj_t *> gStateLabels;
 
-    // make the background black
-    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
-    panel = lv_obj_create(lv_screen_active());
-    group = lv_group_create();
+size_t gRenderedCount = static_cast<size_t>(-1);
+bool gTogglePending = false;
+size_t gToggleIndex = 0;
+uint32_t gLastUiUpdate = 0;
 
-    lv_obj_set_size(panel, lv_obj_get_width(lv_screen_active()), lv_obj_get_height(lv_screen_active()));
-    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 0);
+void row_event_cb(lv_event_t *event) {
+    lv_event_code_t code = lv_event_get_code(event);
+    lv_obj_t *row = static_cast<lv_obj_t *>(lv_event_get_target(event));
+    size_t index = reinterpret_cast<uintptr_t>(lv_event_get_user_data(event));
 
-    lv_obj_set_style_border_color(panel, lv_color_black(), 0);
-    // make the panel round
-    lv_obj_set_style_radius(panel, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    // make it non scrollable
-    lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_scrollbar_mode(lv_screen_active(), LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_bg_color(panel, lv_color_black(), LV_PART_MAIN);
-    // make the border color black
-    lv_obj_remove_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_remove_flag(panel, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+    if (code == LV_EVENT_CLICKED) {
+        gToggleIndex = index;
+        gTogglePending = true;
+    } else if (code == LV_EVENT_FOCUSED) {
+        lv_obj_scroll_to_view(row, LV_ANIM_ON);
+    }
+}
 
-    // create a list of labels
-    // std::vector<lv_img_dsc_t> images = {img_compass,img_compass,img_compass,img_compass,img_compass};
-
-    // create_circular_buttons_with_images(panel, images);
-    create_circular_buttons(panel, labels);
-    lv_group_add_obj(group, panel);
-
-    // lv_group_set_default(group);
-    // lv_group_set_editing(group, true);
-
-    for (lv_indev_t *indev = lv_indev_get_next(nullptr); indev != nullptr; indev = lv_indev_get_next(indev))
-    {
-        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_ENCODER)
-        {
-            lv_indev_set_group(indev, group);
-            break;
+void attach_encoder_to_group() {
+    for (lv_indev_t *indev = lv_indev_get_next(nullptr); indev != nullptr; indev = lv_indev_get_next(indev)) {
+        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_ENCODER) {
+            lv_indev_set_group(indev, gGroup);
+            return;
         }
     }
-    // set the focus to the first button
-    lv_group_focus_obj(lv_group_get_focused(group));
-
-    lv_obj_add_event_cb(panel, item_select_cb, LV_EVENT_ALL, nullptr);
 }
-void create_circular_buttons(lv_obj_t *parent, std::vector<std::string> labels)
-{
-    int centerxy = 85;
-    int radius = 89;
 
-    for (int i = 0; i < numButtons; i++)
-    {
-        int angle = i * angleStep - 90; // Subtract 90 degrees to start at 12 o'clock
-        int x = centerxy + radius * cos(angle * M_PI / 180);
-        int y = centerxy + radius * sin(angle * M_PI / 180);
+void rebuild_rows() {
+    if (!gList || !gShelly) return;
+    lv_obj_clean(gList);
+    gRows.clear();
+    gStateLabels.clear();
+    lv_group_remove_all_objs(gGroup);
 
-        // x position of the center from the button
-        int centerx = (x - centerxy) / 1;
-        // y position of the center from the button
-        int centery = (y - centerxy) / 1;
-
-        int padding = 12;
-
-        // calculate button size from the angle step
-        int size = (20 + angleStep) - padding;
-
-        lv_obj_t *button = lv_btn_create(parent);
-        lv_obj_set_pos(button, x, y);
-
-        lv_obj_set_size(button, size, size);
-        // make the button round
-        lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, 0);
-
-        // change button color to dark green
-        lv_obj_set_style_bg_color(button, lv_color_hex(0x00FF00), LV_PART_MAIN);
-
-        // transition to the center of the screen when focused
-        lv_obj_set_style_translate_x(button, -centerx, LV_STATE_FOCUSED);
-        lv_obj_set_style_translate_y(button, -centery, LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_width(button,20,LV_STATE_FOCUSED);
-        lv_obj_set_style_transform_height(button,20,LV_STATE_FOCUSED);
-
-        lv_obj_t *label = lv_label_create(button);
-        lv_label_set_text(label, labels[i].c_str());
-        lv_group_add_obj(group, button);
-        lv_obj_add_event_cb(button, button_press_cb, LV_EVENT_ALL, nullptr);
-    }
-}
-void item_select_cb(lv_event_t *e)
-{
-    lv_indev_t *indev = lv_indev_active();
-    if (indev == nullptr)
+    if (gShelly->count() == 0) {
+        lv_obj_t *empty = lv_label_create(gList);
+        lv_label_set_text(empty, "Keine Shellys\n\nWebUI oeffnen und\nGeraete suchen");
+        lv_obj_set_style_text_align(empty, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_set_style_text_color(empty, lv_color_hex(0x9AA7B6), 0);
+        lv_obj_center(empty);
+        gRenderedCount = 0;
         return;
-    lv_indev_type_t indev_type = lv_indev_get_type(indev);
+    }
 
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *buttons = (lv_obj_t *)lv_event_get_target(e);
+    for (size_t i = 0; i < gShelly->count(); ++i) {
+        const ShellyDevice *device = gShelly->get(i);
+        lv_obj_t *row = lv_button_create(gList);
+        lv_obj_set_size(row, 190, 54);
+        lv_obj_set_style_radius(row, 14, 0);
+        lv_obj_set_style_bg_color(row, lv_color_hex(0x151920), 0);
+        lv_obj_set_style_bg_color(row, lv_color_hex(0x1D2A20), LV_STATE_FOCUSED);
+        lv_obj_set_style_border_width(row, 0, 0);
+        lv_obj_set_style_border_width(row, 2, LV_STATE_FOCUSED);
+        lv_obj_set_style_border_color(row, lv_color_hex(0x56D364), LV_STATE_FOCUSED);
+        lv_obj_set_style_pad_left(row, 12, 0);
+        lv_obj_set_style_pad_right(row, 12, 0);
+        lv_obj_set_style_pad_top(row, 7, 0);
+        lv_obj_set_style_pad_bottom(row, 7, 0);
 
-    if (code == LV_EVENT_VALUE_CHANGED)
-    {
+        lv_obj_t *name = lv_label_create(row);
+        lv_label_set_text(name, device->name.c_str());
+        lv_obj_set_width(name, 122);
+        lv_label_set_long_mode(name, LV_LABEL_LONG_DOT);
+        lv_obj_align(name, LV_ALIGN_LEFT_MID, 0, -8);
+        lv_obj_set_style_text_color(name, lv_color_hex(0xF4F7FB), 0);
 
-        // focus the next or the previous object according to the rotation
-        if (indev_type == LV_INDEV_TYPE_ENCODER)
-        {
-            group = lv_obj_get_group(buttons);
-            int diff = lv_indev_get_key(indev);
+        lv_obj_t *meta = lv_label_create(row);
+        String info = device->host + "  C" + String(device->channel);
+        lv_label_set_text(meta, info.c_str());
+        lv_obj_set_width(meta, 125);
+        lv_label_set_long_mode(meta, LV_LABEL_LONG_DOT);
+        lv_obj_align(meta, LV_ALIGN_LEFT_MID, 0, 10);
+        lv_obj_set_style_text_color(meta, lv_color_hex(0x7E8998), 0);
+        lv_obj_set_style_text_font(meta, &lv_font_montserrat_10, 0);
 
-            if (diff > 0)
-            {
-                lv_group_focus_next(lv_obj_get_group(buttons));
-            }
-            else
-            {
-                lv_group_focus_prev(lv_obj_get_group(buttons));
-            }
-        }
+        lv_obj_t *state = lv_label_create(row);
+        lv_label_set_text(state, device->online ? (device->on ? "EIN" : "AUS") : "---");
+        lv_obj_align(state, LV_ALIGN_RIGHT_MID, 0, 0);
+        lv_obj_set_style_text_color(state, device->online && device->on ? lv_color_hex(0x56D364) : lv_color_hex(0x9AA7B6), 0);
+
+        lv_obj_add_event_cb(row, row_event_cb, LV_EVENT_ALL, reinterpret_cast<void *>(i));
+        lv_group_add_obj(gGroup, row);
+        gRows.push_back(row);
+        gStateLabels.push_back(state);
+    }
+
+    if (!gRows.empty()) lv_group_focus_obj(gRows.front());
+    gRenderedCount = gShelly->count();
+}
+
+void update_rows() {
+    for (size_t i = 0; i < gStateLabels.size() && i < gShelly->count(); ++i) {
+        const ShellyDevice *device = gShelly->get(i);
+        String state = device->online ? (device->on ? "EIN" : "AUS") : "---";
+        if (device->online && !isnan(device->powerW)) state += "\n" + String(device->powerW, 0) + "W";
+        lv_label_set_text(gStateLabels[i], state.c_str());
+        lv_obj_set_style_text_align(gStateLabels[i], LV_TEXT_ALIGN_RIGHT, 0);
+        lv_obj_set_style_text_color(gStateLabels[i], device->online && device->on ? lv_color_hex(0x56D364) : lv_color_hex(0x9AA7B6), 0);
     }
 }
-void button_press_cb(lv_event_t *e)
-{
+}
 
-    // find out which button was pressed and do something in switch case
-    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
-    lv_obj_t *label = lv_obj_get_child(obj,0);
-    const char *text = lv_label_get_text(label);
+void ui_init(ShellyManager *shellyManager, WebUiService *webUi, MqttService *mqttService) {
+    gShelly = shellyManager;
+    gWebUi = webUi;
+    gMqtt = mqttService;
 
-    Serial.println(text);
+    lv_obj_t *screen = lv_screen_active();
+    lv_obj_set_style_bg_color(screen, lv_color_hex(0x0B0D10), 0);
+    lv_obj_remove_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
+    gHeader = lv_label_create(screen);
+    lv_obj_set_width(gHeader, 190);
+    lv_label_set_long_mode(gHeader, LV_LABEL_LONG_DOT);
+    lv_obj_align(gHeader, LV_ALIGN_TOP_MID, 0, 17);
+    lv_obj_set_style_text_align(gHeader, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(gHeader, lv_color_hex(0xF4F7FB), 0);
+
+    gList = lv_obj_create(screen);
+    lv_obj_set_size(gList, 214, 150);
+    lv_obj_align(gList, LV_ALIGN_CENTER, 0, 3);
+    lv_obj_set_flex_flow(gList, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(gList, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(gList, 7, 0);
+    lv_obj_set_style_pad_top(gList, 9, 0);
+    lv_obj_set_style_pad_bottom(gList, 9, 0);
+    lv_obj_set_style_bg_opa(gList, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(gList, 0, 0);
+    lv_obj_set_scrollbar_mode(gList, LV_SCROLLBAR_MODE_OFF);
+
+    gFooter = lv_label_create(screen);
+    lv_obj_set_width(gFooter, 190);
+    lv_obj_align(gFooter, LV_ALIGN_BOTTOM_MID, 0, -14);
+    lv_label_set_long_mode(gFooter, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_set_style_text_align(gFooter, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(gFooter, lv_color_hex(0x7E8998), 0);
+    lv_obj_set_style_text_font(gFooter, &lv_font_montserrat_10, 0);
+
+    gGroup = lv_group_create();
+    lv_group_set_default(gGroup);
+    attach_encoder_to_group();
+    rebuild_rows();
+}
+
+void ui_loop() {
+    if (!gShelly || !gWebUi || millis() - gLastUiUpdate < 350) return;
+    gLastUiUpdate = millis();
+
+    if (gRenderedCount != gShelly->count()) rebuild_rows();
+    update_rows();
+
+    String header;
+    if (gWebUi->isApMode()) header = "SETUP AP";
+    else header = WiFi.status() == WL_CONNECTED ? "Shelly Control  WiFi" : "Shelly Control  offline";
+    if (gMqtt && gMqtt->running()) header += "  MQTT";
+    lv_label_set_text(gHeader, header.c_str());
+
+    String footer;
+    if (gWebUi->isApMode()) footer = gWebUi->apSsid() + " | PW: m5dial-setup | 192.168.4.1";
+    else footer = gWebUi->accessAddress();
+    lv_label_set_text(gFooter, footer.c_str());
+}
+
+bool ui_take_toggle_request(size_t &deviceIndex) {
+    if (!gTogglePending) return false;
+    gTogglePending = false;
+    deviceIndex = gToggleIndex;
+    return true;
 }
