@@ -1,0 +1,30 @@
+#pragma once
+
+#include <Arduino.h>
+#include <PicoMQTT.h>
+#include <WiFi.h>
+#include "app_config.h"
+#include "shelly_manager.h"
+
+class MqttService {
+public:
+    ~MqttService();
+    void begin(ConfigStore *configStore, ShellyManager *shellyManager);
+    void loop();
+    bool running() const { return broker_ != nullptr; }
+
+private:
+    void handleCommand(const char *topic, const char *payload);
+    void processPendingCommand();
+    void publishStatuses();
+
+    ConfigStore *configStore_ = nullptr;
+    ShellyManager *shellyManager_ = nullptr;
+    WiFiServer *tcpServer_ = nullptr;
+    PicoMQTT::Server *broker_ = nullptr;
+
+    bool commandPending_ = false;
+    int pendingIndex_ = -1;
+    String pendingAction_;
+    uint32_t lastPublishMs_ = 0;
+};
